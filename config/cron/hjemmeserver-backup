@@ -1,0 +1,3 @@
+# /etc/cron.d/hjemmeserver-backup
+# Nattlig backup til SSD-en kl. 03:00 (bare hvis SSD-en er koblet til)
+0 3 * * * root mountpoint -q /mnt/ssd && rsync -a /data/photos/ /mnt/ssd/backup/photos/ && rsync -a /home/jonas/homeassistant/ /mnt/ssd/backup/homeassistant/ && rsync -a /home/jonas/homepage/ /mnt/ssd/backup/homepage/ && date -Iminutes > /mnt/ssd/backup/sist-kjort.txt

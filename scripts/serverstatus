@@ -1,0 +1,41 @@
+#!/usr/bin/env bash
+# serverstatus – kort oversikt over hjemmeserveren
+
+linje() { printf '%-12s %s\n' "$1" "$2"; }
+
+echo "────────── Hjemmeserver ──────────"
+
+for b in /sys/class/power_supply/BAT*; do
+  [ -e "$b/capacity" ] || continue
+  s=$(cat "$b/status" 2>/dev/null)
+  case "$s" in
+    Charging) s="lader" ;;
+    Discharging) s="GÅR PÅ BATTERI – sjekk strømmen" ;;
+    Full) s="fullt" ;;
+    "Not charging") s="plugget i, lader ikke" ;;
+  esac
+  linje "Batteri:" "$(cat "$b/capacity")% ($s)"
+done
+
+lan=$(ip -4 -o addr show scope global 2>/dev/null | awk '$2 !~ /^(docker|br-|veth|tailscale)/ {split($4,a,"/"); printf "%s (%s)  ", a[1], $2}')
+linje "Hjemme-IP:" "${lan:-INGEN – serveren har mistet nettet}"
+ts=$(tailscale ip -4 2>/dev/null | head -n1)
+linje "Tailscale:" "${ts:-ikke tilkoblet}"
+
+linje "Oppe i:" "$(uptime -p | sed 's/^up //')"
+linje "Disk /:" "$(df -h / | awk 'NR==2 {print $3 " av " $2 " brukt (" $5 ")"}')"
+if mountpoint -q /mnt/ssd 2>/dev/null; then
+  linje "SSD:" "$(df -h /mnt/ssd | awk 'NR==2 {print $3 " av " $2 " brukt (" $5 ")"}')"
+fi
+[ -f /mnt/ssd/backup/sist-kjort.txt ] && linje "Backup:" "sist $(cat /mnt/ssd/backup/sist-kjort.txt)"
+linje "Minne:" "$(free -h | awk '/^Mem:/ {print $3 " av " $2 " brukt"}')"
+
+t=$(cat /sys/class/thermal/thermal_zone*/temp 2>/dev/null | sort -n | tail -n1)
+[ -n "$t" ] && linje "Temp:" "$((t / 1000)) °C"
+
+echo "Containere:"
+if out=$(docker ps --format '{{.Names}}: {{.Status}}' 2>/dev/null) || out=$(sudo -n docker ps --format '{{.Names}}: {{.Status}}' 2>/dev/null); then
+  if [ -n "$out" ]; then echo "$out" | sed 's/^/  /'; else echo "  ingen kjører"; fi
+else
+  echo "  (skriv 'sudo serverstatus' for å se Docker)"
+fi

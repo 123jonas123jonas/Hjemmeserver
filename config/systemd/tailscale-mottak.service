@@ -1,0 +1,16 @@
+# /etc/systemd/system/tailscale-mottak.service
+# Henter filer sendt via Taildrop rett inn i bildemappa, som vanlig bruker.
+# Krever: sudo tailscale set --operator=jonas
+[Unit]
+Description=Hent filer sendt via Tailscale til /data/photos
+After=tailscaled.service
+Wants=tailscaled.service
+
+[Service]
+User=jonas
+ExecStart=/usr/bin/tailscale file get --loop --conflict=rename /data/photos
+Restart=always
+RestartSec=10
+
+[Install]
+WantedBy=multi-user.target

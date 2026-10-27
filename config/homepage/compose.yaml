@@ -1,0 +1,13 @@
+services:
+  homepage:
+    image: ghcr.io/gethomepage/homepage:latest
+    container_name: homepage
+    ports:
+      - 3000:3000
+    volumes:
+      - ./config:/app/config
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      # Adressen dashbordet åpnes på (Tailscale-IP-en til serveren)
+      HOMEPAGE_ALLOWED_HOSTS: 100.x.x.x:3000
+    restart: unless-stopped

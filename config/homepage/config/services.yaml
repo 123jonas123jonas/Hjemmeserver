@@ -1,0 +1,13 @@
+- Smarthus:
+    - Home Assistant:
+        href: http://100.x.x.x:8123
+        icon: home-assistant.png
+        description: Smarthus
+        server: my-docker
+        container: homeassistant
+    - ESPHome:
+        href: http://100.x.x.x:6052
+        icon: esphome.png
+        description: Sensorer
+        server: my-docker
+        container: esphome
